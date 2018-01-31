@@ -119,7 +119,7 @@ ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIn
 	Monitor[
 		Table[tableIndex++;expr, {i, iterators}]
 	,
-		If[OptionValue[opts, "ShowInfo"],
+		If[OptionValue[ProgressTable, opts, "ShowInfo"],
 			DetailedIndicator[tableIndex, Length[iterators], startTime]
 			,
 			DefaultIndicator[tableIndex, Length[iterators]]
@@ -135,7 +135,7 @@ ProgressTable[expr_, n_, opts:OptionsPattern[]] := Module[{tableIndex, startTime
 		Table[tableIndex++;expr, n]
 	,
 
-		If[OptionValue[opts, "ShowInfo"],
+		If[OptionValue[ProgressTable, opts, "ShowInfo"],
 			DetailedIndicator[tableIndex, n, startTime]
 			,
 			DefaultIndicator[tableIndex, n]
