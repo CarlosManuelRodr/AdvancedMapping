@@ -27,19 +27,19 @@ Begin["`Private`"]
 GetSeconds[time_] := IntegerString[Round[Mod[time,60]], 10, 2];
 GetMinutes[time_]:= IntegerString[Mod[Floor[time/60],60], 10, 2];
 GetHours[time_] := IntegerString[Floor[time/3600], 10, 2];
-ClockFormat[time_] :=StringJoin[GetHours[time], ":", GetMinutes[time], ":", GetSeconds[time]];
+ClockFormat[time_] := StringJoin[GetHours[time], ":", GetMinutes[time], ":", GetSeconds[time]];
 
 (* Mapeos con progreso *)
 DefaultIndicator[indexProgress_, totalSize_] := ProgressIndicator[indexProgress, {1, totalSize}];
 
-DetailedIndicator[indexProgress_,totalSize_,startTime_]:=Module[{progressString,remainingTime,remainingTimeString,indicator,ellapsedTimeString},
-	progressString = Row[{Style["Progress: ",Bold],ToString[indexProgress],"/",ToString[totalSize]}];
-	ellapsedTimeString = Row[{Style["Elapsed time: ",Bold],ClockFormat[AbsoluteTime[]-startTime]}];
+DetailedIndicator[indexProgress_,totalSize_,startTime_] := Module[{progressString, remainingTime, remainingTimeString, indicator, ellapsedTimeString},
+	progressString = Row[{Style["Progress: ", Bold], ToString[indexProgress], "/", ToString[totalSize]}];
+	ellapsedTimeString = Row[{Style["Elapsed time: ", Bold], ClockFormat[AbsoluteTime[] - startTime]}];
 
 	If[indexProgress != 0,
-		remainingTime = (AbsoluteTime[]-startTime)/indexProgress (totalSize-indexProgress);
-		remainingTimeString = Row[{Style["Remaining: ",Bold],ClockFormat[remainingTime]}];
-	,
+		remainingTime = ((AbsoluteTime[]-startTime)/indexProgress)*(totalSize-indexProgress);
+		remainingTimeString = Row[{Style["Remaining: ", Bold], ClockFormat[remainingTime]}];
+		,
 		remainingTimeString = Row[{Style["Remaining: ", Bold],"Unknown"}];
 	];
 
@@ -58,47 +58,52 @@ DetailedIndicator[indexProgress_,totalSize_,startTime_]:=Module[{progressString,
 	Return[indicator];
 ];
 
-ProgressFunction[f_, arg_, index_] := Module[{output},
-	output = f[arg];
-	AppendTo[indexProgress, index];
-	Return[output];
-];
-
-ParallelMapIndexed[f_, expr_, opts: OptionsPattern[]] :=
-Parallelize[
-	MapIndexed[ProgressFunction[f, #1, #2]&, expr],
-	FilterRules[{opts}, Options[Parallelize]]
-];
-
-SetSharedVariable[indexProgress];
+SetAttributes[ProgressParallelMap, HoldFirst];
 ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->False, Parallelize}]] :=
-Module[{startTime},
-	indexProgress = {0};
+Module[{startTime, indexProgress, output},
+	indexProgress = 0;
+	SetSharedVariable[indexProgress];
 	startTime = AbsoluteTime[];
 
 	Monitor[
-		ParallelMapIndexed[f, expr, opts]
+		ParallelMap[
+			(
+				output = f[#];
+				indexProgress++;
+				output
+			)&,
+			expr,
+			FilterRules[{opts}, Options[Parallelize]]
+		]
 		,
 		If[OptionValue["ShowInfo"],
-			DetailedIndicator[Max[indexProgress], Length[expr], startTime]
+			DetailedIndicator[indexProgress, Length[expr], startTime]
 			,
-			DefaultIndicator[Max[indexProgress], Length[expr]]
+			DefaultIndicator[indexProgress, Length[expr]]
 		]
 	]
 ]; 
 
+SetAttributes[ProgressMap, HoldFirst];
 ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->False}]] :=
-Module[{startTime},
-	indexProgress = {0};
+Module[{startTime, indexProgress, output},
+	indexProgress = 0;
 	startTime = AbsoluteTime[];
 
 	Monitor[
-			MapIndexed[ProgressFunction[f, #1, #2]&, expr],
-
-			If[OptionValue["ShowInfo"],
-				DetailedIndicator[Max[indexProgress], Length[expr], startTime]
+			Map[
+			(
+				output = f[#];
+				indexProgress++;
+				output
+			)&,
+			expr
+			]
 			,
-				DefaultIndicator[Max[indexProgress], Length[expr]]
+			If[OptionValue["ShowInfo"],
+				DetailedIndicator[indexProgress, Length[expr], startTime]
+				,
+				DefaultIndicator[indexProgress, Length[expr]]
 			]
 	]
 ];
@@ -116,7 +121,7 @@ ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIn
 	,
 		If[OptionValue[opts, "ShowInfo"],
 			DetailedIndicator[tableIndex, Length[iterators], startTime]
-		,
+			,
 			DefaultIndicator[tableIndex, Length[iterators]]
 		]
 	]
@@ -132,7 +137,7 @@ ProgressTable[expr_, n_, opts:OptionsPattern[]] := Module[{tableIndex, startTime
 
 		If[OptionValue[opts, "ShowInfo"],
 			DetailedIndicator[tableIndex, n, startTime]
-		,
+			,
 			DefaultIndicator[tableIndex, n]
 		]
 	]
