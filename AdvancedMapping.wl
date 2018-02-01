@@ -32,7 +32,8 @@ ClockFormat[time_] := StringJoin[GetHours[time], ":", GetMinutes[time], ":", Get
 (* Mapeos con progreso *)
 DefaultIndicator[indexProgress_, totalSize_] := ProgressIndicator[indexProgress, {1, totalSize}];
 
-DetailedIndicator[indexProgress_,totalSize_,startTime_] := Module[{progressString, remainingTime, remainingTimeString, indicator, ellapsedTimeString},
+DetailedIndicator[indexProgress_, totalSize_, startTime_, label_:"Evaluating..."] := 
+Module[{progressString, remainingTime, remainingTimeString, indicator, ellapsedTimeString},
 	progressString = Row[{Style["Progress: ", Bold], ToString[indexProgress], "/", ToString[totalSize]}];
 	ellapsedTimeString = Row[{Style["Elapsed time: ", Bold], ClockFormat[AbsoluteTime[] - startTime]}];
 
@@ -40,14 +41,14 @@ DetailedIndicator[indexProgress_,totalSize_,startTime_] := Module[{progressStrin
 		remainingTime = ((AbsoluteTime[]-startTime)/indexProgress)*(totalSize-indexProgress);
 		remainingTimeString = Row[{Style["Remaining: ", Bold], ClockFormat[remainingTime]}];
 		,
-		remainingTimeString = Row[{Style["Remaining: ", Bold],"Unknown"}];
+		remainingTimeString = Row[{Style["Remaining: ", Bold], "Unknown"}];
 	];
 
 	indicator = Panel[
 		Column[
 			{
-				Style["Evaluating...",Bold],
-				DefaultIndicator[indexProgress,totalSize],
+				Style[label, Bold],
+				DefaultIndicator[indexProgress, totalSize],
 				progressString,
 				ellapsedTimeString,
 				remainingTimeString
@@ -59,7 +60,7 @@ DetailedIndicator[indexProgress_,totalSize_,startTime_] := Module[{progressStrin
 ];
 
 SetAttributes[ProgressParallelMap, HoldFirst];
-ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->False, Parallelize}]] :=
+ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating...", Parallelize}]] :=
 Module[{startTime, indexProgress, output},
 	indexProgress = 0;
 	SetSharedVariable[indexProgress];
@@ -77,7 +78,7 @@ Module[{startTime, indexProgress, output},
 		]
 		,
 		If[OptionValue["ShowInfo"],
-			DetailedIndicator[indexProgress, Length[expr], startTime]
+			DetailedIndicator[indexProgress, Length[expr], startTime, OptionValue["Label"]]
 			,
 			DefaultIndicator[indexProgress, Length[expr]]
 		]
@@ -85,7 +86,7 @@ Module[{startTime, indexProgress, output},
 ]; 
 
 SetAttributes[ProgressMap, HoldFirst];
-ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->False}]] :=
+ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating..."}]] :=
 Module[{startTime, indexProgress, output},
 	indexProgress = 0;
 	startTime = AbsoluteTime[];
@@ -101,7 +102,7 @@ Module[{startTime, indexProgress, output},
 			]
 			,
 			If[OptionValue["ShowInfo"],
-				DetailedIndicator[indexProgress, Length[expr], startTime]
+				DetailedIndicator[indexProgress, Length[expr], startTime, OptionValue["Label"]]
 				,
 				DefaultIndicator[indexProgress, Length[expr]]
 			]
@@ -111,7 +112,7 @@ Module[{startTime, indexProgress, output},
 (* Tablas con progreso *)
 SetAttributes[ProgressTable, HoldFirst]
 
-Options[ProgressTable] = {"ShowInfo"->False};
+Options[ProgressTable] = {"ShowInfo"->False, "Label"->"Evaluating..."};
 ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIndex, startTime},
 	tableIndex = 0;
 	startTime = AbsoluteTime[];
@@ -119,8 +120,8 @@ ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIn
 	Monitor[
 		Table[tableIndex++;expr, {i, iterators}]
 	,
-		If[OptionValue[ProgressTable, opts, "ShowInfo"],
-			DetailedIndicator[tableIndex, Length[iterators], startTime]
+		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
+			DetailedIndicator[tableIndex, Length[iterators], startTime, OptionValue[ProgressTable, {opts}, "Label"]]
 			,
 			DefaultIndicator[tableIndex, Length[iterators]]
 		]
@@ -135,8 +136,8 @@ ProgressTable[expr_, n_, opts:OptionsPattern[]] := Module[{tableIndex, startTime
 		Table[tableIndex++;expr, n]
 	,
 
-		If[OptionValue[ProgressTable, opts, "ShowInfo"],
-			DetailedIndicator[tableIndex, n, startTime]
+		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
+			DetailedIndicator[tableIndex, n, startTime, OptionValue[ProgressTable, {opts}, "Label"]]
 			,
 			DefaultIndicator[tableIndex, n]
 		]
