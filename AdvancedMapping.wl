@@ -17,15 +17,21 @@ ProgressTable::usage =
 MapIf::usage = "MapIf[f,expr,crit] Maps if condition in crit is true at each element.";
 
 MapIfElse::usage = "MapIfElse[f,g,expr,crit] Maps f if condition in crit is true at each element.
-Else it maps g."
+Else it maps g.";
 
-MapPattern::usage = "MapPattern[f,expr,patt] Maps when pattern in patt is matched."
+MapPattern::usage = "MapPattern[f,expr,patt] Maps when pattern in patt is matched.";
+
+NestApplyList::usage = "NestApplyList[f, g, expr, n] is equivalent to Map[g, NestList[f, expr, n]], 
+but doesn't keep the whole NestList[f, expr, n] list, using less memory.";
+
+NestApplyWhileList::usage = "NestApplyWhileList[f, g, expr, test] is equivalent to 
+Map[g, NestWhileList[f, expr, test]], but doesn't keep the whole NestList[f, expr, n] list, using less memory.";
 
 Begin["`Private`"]
 
 (* Reloj *)
-GetSeconds[time_] := IntegerString[Round[Mod[time,60]], 10, 2];
-GetMinutes[time_]:= IntegerString[Mod[Floor[time/60],60], 10, 2];
+GetSeconds[time_] := IntegerString[Round[Mod[time, 60]], 10, 2];
+GetMinutes[time_]:= IntegerString[Mod[Floor[time/60], 60], 10, 2];
 GetHours[time_] := IntegerString[Floor[time/3600], 10, 2];
 ClockFormat[time_] := StringJoin[GetHours[time], ":", GetMinutes[time], ":", GetSeconds[time]];
 
@@ -38,7 +44,7 @@ Module[{progressString, remainingTime, remainingTimeString, indicator, ellapsedT
 	ellapsedTimeString = Row[{Style["Elapsed time: ", Bold], ClockFormat[AbsoluteTime[] - startTime]}];
 
 	If[indexProgress != 0,
-		remainingTime = ((AbsoluteTime[]-startTime)/indexProgress)*(totalSize-indexProgress);
+		remainingTime = ((AbsoluteTime[] - startTime) / indexProgress)*(totalSize - indexProgress);
 		remainingTimeString = Row[{Style["Remaining: ", Bold], ClockFormat[remainingTime]}];
 		,
 		remainingTimeString = Row[{Style["Remaining: ", Bold], "Unknown"}];
@@ -61,10 +67,8 @@ Module[{progressString, remainingTime, remainingTimeString, indicator, ellapsedT
 
 SetAttributes[ProgressParallelMap, HoldFirst];
 ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating...", Parallelize}]] :=
-Module[{startTime, indexProgress, output},
-	indexProgress = 0;
+Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
-	startTime = AbsoluteTime[];
 
 	Monitor[
 		ParallelMap[
@@ -87,10 +91,7 @@ Module[{startTime, indexProgress, output},
 
 SetAttributes[ProgressMap, HoldFirst];
 ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating..."}]] :=
-Module[{startTime, indexProgress, output},
-	indexProgress = 0;
-	startTime = AbsoluteTime[];
-
+Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	Monitor[
 			Map[
 			(
@@ -113,13 +114,11 @@ Module[{startTime, indexProgress, output},
 SetAttributes[ProgressTable, HoldFirst]
 
 Options[ProgressTable] = {"ShowInfo"->False, "Label"->"Evaluating..."};
-ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIndex, startTime},
-	tableIndex = 0;
-	startTime = AbsoluteTime[];
-
+ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] :=
+Block[{tableIndex = 0,startTime = AbsoluteTime[]},
 	Monitor[
 		Table[tableIndex++;expr, {i, iterators}]
-	,
+		,
 		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
 			DetailedIndicator[tableIndex, Length[iterators], startTime, OptionValue[ProgressTable, {opts}, "Label"]]
 			,
@@ -128,14 +127,11 @@ ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] := Module[{tableIn
 	]
 ];
 
-ProgressTable[expr_, n_, opts:OptionsPattern[]] := Module[{tableIndex, startTime},
-	tableIndex = 0;
-	startTime = AbsoluteTime[];
-
+ProgressTable[expr_, n_, opts: OptionsPattern[]] :=
+Block[{tableIndex = 0,startTime = AbsoluteTime[]},
 	Monitor[
 		Table[tableIndex++;expr, n]
-	,
-
+		,
 		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
 			DetailedIndicator[tableIndex, n, startTime, OptionValue[ProgressTable, {opts}, "Label"]]
 			,
@@ -144,33 +140,67 @@ ProgressTable[expr_, n_, opts:OptionsPattern[]] := Module[{tableIndex, startTime
 	]
 ];
 
-ProgressTable[expr_, {i_, iMin_, iMax_}, opts:OptionsPattern[]] := Module[{iterators},
-	iterators = Range[iMin, iMax, 1];
-	ProgressTable[expr, {i, iterators}, opts]
-];
+ProgressTable[expr_, {i_, iMin_, iMax_}, opts: OptionsPattern[]] := ProgressTable[expr, {i, Range[iMin, iMax, 1]}, opts];
 
-ProgressTable[expr_, {i_, iMin_, iMax_, di_}, opts:OptionsPattern[]] := Module[{iterators},
-	iterators = Range[iMin, iMax, di];
-	ProgressTable[expr, {i, iterators}, opts]
-];
+ProgressTable[expr_, {i_, iMin_, iMax_, di_}, opts: OptionsPattern[]] := ProgressTable[expr, {i, Range[iMin, iMax, di]}, opts];
 
-ProgressTable[expr_, {i_, iMin_, iMax_, di_}, simpleTableIterators__, opts:OptionsPattern[]] := Module[{iterators},
-	iterators = Range[iMin, iMax, di];
-	ProgressTable[Table[expr, simpleTableIterators], {i, iterators}, opts]
-];
+ProgressTable[expr_, {i_, iMin_, iMax_, di_}, simpleTableIterators__, opts:OptionsPattern[]] := ProgressTable[Table[expr, simpleTableIterators], {i, Range[iMin, iMax, di]}, opts];
 
-ProgressTable[expr_, {i_, iMin_, iMax_}, simpleTableIterators__, opts:OptionsPattern[]] := ProgressTable[expr, {i, iMin, iMax, 1}, simpleTableIterators, opts]
+ProgressTable[expr_, {i_, iMin_, iMax_}, simpleTableIterators__, opts:OptionsPattern[]] := ProgressTable[expr, {i, iMin, iMax, 1}, simpleTableIterators, opts];
 
 (* Mapeo selectivo *)
+SetAttributes[MapIf, HoldAll];
 MapIf[f_, expr_, crit_]:=MapAt[f,expr,Position[Map[crit,expr],True]];
 
+SetAttributes[MapIfElse, HoldAll];
 MapIfElse[f1_, f2_, expr_, crit_]:=Module[{truePos,falsePos},
 	truePos = Position[Map[crit, expr], True];
 	falsePos = Complement[Transpose[{Range[Length[expr]]}], truePos];
 	MapAt[f2, MapAt[f1, expr, truePos], falsePos]
 ];
 
+SetAttributes[MapPattern, HoldAll];
 MapPattern[f_, expr_, patt_]:=MapAt[f, expr, Position[expr, patt]];
+
+(* Nesting *)
+SetAttributes[Reaped, HoldFirst];
+Reaped[list_] := First[Last[Reap[list]]];
+Push[expr_, elem_] := Rest[Append[expr, elem]];
+
+SetAttributes[NestApplyList, HoldAll];
+NestApplyList[f_, g_, expr_, n_] := Reaped[Sow[g[Nest[(Sow[g[##]];f[##])&, expr, n]]]];
+
+SetAttributes[NestApplyWhileList, HoldAll];
+NestApplyWhileList[f_, g_, expr_, test_, All] := Map[g, NestWhileList[f, expr, test, All]];
+NestApplyWhileList[f_, g_, expr_, test_, m_:1] := 
+Block[{testArg, tmp, iterations}, 
+	(* This couldn't be implemented based on NestWhile because NestWhile saves the result at every step. Not very memory efficent. *)
+	Reaped[
+		testArg = NestList[(Sow[g[#]];f[#])&, expr, m-1];
+			Sow[g[Last[testArg]]];
+
+		While[Apply[test, testArg], 
+			tmp = f[Last[testArg]];
+			testArg = Push[testArg, tmp];
+			Sow[g[tmp]];
+		]
+	]
+];
+
+NestApplyWhileList[f_, g_, expr_, test_, m_, max_] := 
+Block[{testArg, tmp, iterations = 0}, 
+	Reaped[
+		testArg = NestList[(Sow[g[#]];f[#])&, expr, m-1];
+		Sow[g[Last[testArg]]];
+
+		While[Apply[test, testArg] && (iterations<max), 
+			tmp = f[Last[testArg]];
+			testArg = Push[testArg, tmp];
+			Sow[g[tmp]];
+			iterations++;
+		]
+	]
+];
 
 End[ ]
 
