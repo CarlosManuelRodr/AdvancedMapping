@@ -27,6 +27,9 @@ but doesn't keep the whole NestList[f, expr, n] list, using less memory.";
 NestApplyWhileList::usage = "NestApplyWhileList[f, g, expr, test] is equivalent to 
 Map[g, NestWhileList[f, expr, test]], but doesn't keep the whole NestList[f, expr, n] list, using less memory.";
 
+NestListIndexed::usage = "NestListIndexed[f, expr, n, startIndex] works as NestList but returns the number of the index
+alongside the result of NestList.";
+
 Begin["`Private`"]
 
 (* Reloj *)
@@ -168,11 +171,11 @@ Reaped[list_] := First[Last[Reap[list]]];
 Push[expr_, elem_] := Rest[Append[expr, elem]];
 
 SetAttributes[NestApplyList, HoldAll];
-NestApplyList[f_, g_, expr_, n_] := Reaped[Sow[g[Nest[(Sow[g[##]];f[##])&, expr, n]]]];
+NestApplyList[f_, g_, expr_, n_?NonNegative] := Reaped[Sow[g[Nest[(Sow[g[##]];f[##])&, expr, n]]]];
 
 SetAttributes[NestApplyWhileList, HoldAll];
 NestApplyWhileList[f_, g_, expr_, test_, All] := Map[g, NestWhileList[f, expr, test, All]];
-NestApplyWhileList[f_, g_, expr_, test_, m_:1] := 
+NestApplyWhileList[f_, g_, expr_, test_, m:(_?Positive): 1] := 
 Block[{testArg, tmp, iterations}, 
 	(* This couldn't be implemented based on NestWhile because NestWhile saves the result at every step. Not very memory efficent. *)
 	Reaped[
@@ -187,7 +190,7 @@ Block[{testArg, tmp, iterations},
 	]
 ];
 
-NestApplyWhileList[f_, g_, expr_, test_, m_, max_] := 
+NestApplyWhileList[f_, g_, expr_, test_, m_?Positive, max_?Positive] := 
 Block[{testArg, tmp, iterations = 0}, 
 	Reaped[
 		testArg = NestList[(Sow[g[#]];f[#])&, expr, m-1];
@@ -201,6 +204,10 @@ Block[{testArg, tmp, iterations = 0},
 		]
 	]
 ];
+
+SetAttributes[NestListIndexed,HoldFirst];
+NestListIndexed[f_, expr_, n_?NonNegative, startIndex_:1] := 
+	Transpose[{Range[startIndex, n+startIndex], NestList[f, expr, n]}];
 
 End[ ]
 
