@@ -3,7 +3,7 @@ Sometimes when I'm running a particularly complex routine I am left wondering if
 
 This package provides Map and Table functions with automatic progress bar, so you can rest easy knowing that it's not your code that it sucks, it's just the Wolfram kernel taking its time.
 
-![Functions](https://github.com/CarlosManuelRodr/AdvancedMapping/raw/master/img/functions.png)
+![Functions](https://github.com/CarlosManuelRodr/AdvancedMapping/raw/master/img/complete_functions.png)
 
 So instead of a blank notebook with a running label you get this
 
