@@ -21,7 +21,7 @@ ProgressMap::usage =
 
 ProgressParallelMap::usage =
  "ProgressParallelMap[f,expr] is a ParallelMap implementation with progress bar. levelspec is always {1}. 
-\"ShowInfo\"\[Rule]True show the detailed version of the progress bar. \"Label\"->\"Custom label\" shows a custom description label. Options are the same as ParallelMap.";
+\"ShowInfo\"\[Rule]True show the detailed version of the progress bar. \"Label\"->\"Custom label\" shows a custom description label. It inherits all options of ParallelMap.";
 
 ParallelMapThread::usage =
 "ParallelMapThread[f, {{\!\(\*SubscriptBox[
@@ -70,6 +70,11 @@ StyleBox[\"\[Ellipsis]\", \"TR\"]\)}] is a ParallelMapThread implementation with
 ProgressTable::usage =
  "Table implementation with progress bar. Same usage as Table. 
 \"ShowInfo\"\[Rule]True show the detailed version of the progress bar. \"Label\"->\"Custom label\" shows a custom description label.";
+
+ProgressParallelTable::usage =
+"ParallelTable implementation with progress bar. Same usage as ParallelTable. 
+\"ShowInfo\"\[Rule]True show the detailed version of the progress bar. \"Label\"->\"Custom label\" shows a custom description label.
+It inherits all the options from ParallelTable.";
 
 MapIf::usage = "MapIf[f, expr, crit] Maps if condition in crit is true at each element.";
 
@@ -174,7 +179,7 @@ MapPattern[f_, expr_, patt_] := MapAt[f, expr, Position[expr, patt]];
 
 SetAttributes[ParallelMapThread, HoldFirst];
 ParallelMapThread::exprdeptherr = "expr must have a depth of at least 3, current depth is `1`";
-ParallelMapThread[f_, expr_,] := If[Depth[expr] < 3,
+ParallelMapThread[f_, expr_] := If[Depth[expr] < 3,
 	Message[ParallelMapThread::exprdeptherr, Depth[expr]];Return[$Failed]
 	,
 	ParallelMap[Apply[f, #]&, Transpose[expr]]
@@ -379,6 +384,60 @@ Block[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
 
 	Monitor[
 		Table[tableIndex++;expr, iterators]
+		,
+		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
+			DetailedIndicator[tableIndex, tuplesLength, startTime, OptionValue[ProgressTable, {opts}, "Label"]]
+			,
+			DefaultIndicator[tableIndex, tuplesLength]
+		]
+	]
+];
+
+
+(* ::Chapter:: *)
+(*Parallel tables with progress*)
+
+
+SetAttributes[ProgressParallelTable,HoldFirst];
+
+Options[ProgressTable]={"ShowInfo"->False, "Label"->"Evaluating...", ParallelTable};
+ProgressParallelTable[expr_, {i_, iterators_}, opts:OptionsPattern[]]:=
+Block[{tableIndex = 0, startTime = AbsoluteTime[]},
+	SetSharedVariable[tableIndex];
+
+	Monitor[
+		ParallelTable[tableIndex++;expr, {i, iterators}, Evaluate[FilterRules[{opts}, Options[ParallelTable]]]]
+		,
+		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
+			DetailedIndicator[tableIndex, Length[iterators], startTime, OptionValue[ProgressTable, {opts}, "Label"]]
+			,
+			DefaultIndicator[tableIndex, Length[iterators]]
+		]
+	]
+];
+
+ProgressParallelTable[expr_, n_Integer, opts:OptionsPattern[]]:=
+Block[{tableIndex = 0,startTime = AbsoluteTime[]},
+	SetSharedVariable[tableIndex];
+
+	Monitor[
+		ParallelTable[tableIndex++;expr, n, Evaluate[FilterRules[{opts}, Options[ParallelTable]]]]
+		,
+		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
+			DetailedIndicator[tableIndex, n, startTime, OptionValue[ProgressTable, {opts}, "Label"]]
+			,
+			DefaultIndicator[tableIndex, n]
+		]
+	]
+];
+
+ProgressParallelTable[expr_, iterators__, opts:OptionsPattern[]]:= 
+Block[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
+	SetSharedVariable[tableIndex];
+	tuplesLength = Length[Tuples[Map[Range[Rest[#] /. List->Sequence]&, {iterators}]]];
+
+	Monitor[
+		ParallelTable[tableIndex++;expr, iterators, Evaluate[FilterRules[{opts}, Options[ParallelTable]]]]
 		,
 		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
 			DetailedIndicator[tableIndex, tuplesLength, startTime, OptionValue[ProgressTable, {opts}, "Label"]]

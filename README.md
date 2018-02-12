@@ -9,5 +9,9 @@ So instead of a blank notebook with a running label you get this
 
 ![running](https://github.com/CarlosManuelRodr/AdvancedMapping/raw/master/img/ProgressMap.gif)
 
+Here is a full description of all the functions implemented in this package:
+
+![description](https://github.com/CarlosManuelRodr/AdvancedMapping/raw/master/img/description.png)
+
 Some other conditional mapping functions are also included.
 Feel free to contribute or improve the package.
