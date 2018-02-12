@@ -13,5 +13,4 @@ Here is a full description of all the functions implemented in this package:
 
 ![description](https://github.com/CarlosManuelRodr/AdvancedMapping/raw/master/img/description.png)
 
-Some other conditional mapping functions are also included.
 Feel free to contribute or improve the package.
