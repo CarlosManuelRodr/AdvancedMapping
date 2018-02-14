@@ -96,6 +96,10 @@ FoldWhile::usage = "FoldWhile[f, test, start, secargs, max] is a equivalent to F
 
 FoldWhileList::usage = "FoldWhileList[f, test, start, secargs, max] is a equivalent to FoldList that folds while test is True.";
 
+EvaluateOnce::usage = "EvaluateOnce[expr] evaluates expr just once. Further reevaluation is not possible."
+
+EvaluateIfChanged::usage = "EvaluateIfChanged[expr, trackedsymbols] evaluates expr only if there is a change in trackedsymbols."
+
 
 (* ::Chapter:: *)
 (*Error messages*)
@@ -508,6 +512,23 @@ Block[{testArg, tmp, iterations = 0},
 SetAttributes[NestListIndexed,HoldFirst];
 NestListIndexed[f_, expr_, n_?NonNegative, startIndex_:1] := 
 	Transpose[{Range[startIndex, n+startIndex], NestList[f, expr, n]}];
+
+
+(* ::Chapter:: *)
+(*Special evaluation*)
+
+
+SetAttributes[{EvaluateIfChanged, EvaluateOnce, SpecialSymbol}, {HoldAll, HoldAll, HoldAll}];
+
+SpecialSymbol[expr_] := SpecialSymbol[expr] = Module[{t, tempSymbol}, SpecialSymbol[expr, t := Unique[tempSymbol]] = t];
+
+EvaluateIfChanged[expr_, trackedSymbols_]:=
+If[UnsameQ[SpecialSymbol[expr], trackedSymbols],
+	SpecialSymbol[expr] = trackedSymbols;
+	ReleaseHold[expr];
+];
+
+EvaluateOnce[expr_] := EvaluateIfChanged[expr, True];
 
 
 (* ::Chapter:: *)
