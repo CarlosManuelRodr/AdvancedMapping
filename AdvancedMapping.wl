@@ -368,8 +368,8 @@ Block[{tableIndex = 0,startTime = AbsoluteTime[]},
 	]
 ];
 
-ProgressTable[expr_, n_, opts: OptionsPattern[]] :=
-Block[{tableIndex = 0,startTime = AbsoluteTime[]},
+ProgressTable[expr_, n_Integer, opts: OptionsPattern[]] :=
+Block[{tableIndex = 0, startTime = AbsoluteTime[]},
 	Monitor[
 		Table[tableIndex++;expr, n]
 		,
