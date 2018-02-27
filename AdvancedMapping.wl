@@ -96,9 +96,15 @@ FoldWhile::usage = "FoldWhile[f, test, start, secargs, max] is a equivalent to F
 
 FoldWhileList::usage = "FoldWhileList[f, test, start, secargs, max] is a equivalent to FoldList that folds while test is True.";
 
-EvaluateOnce::usage = "EvaluateOnce[expr] evaluates expr just once. Further reevaluation is not possible."
+EvaluateOnce::usage = "EvaluateOnce[expr] evaluates expr just once. Further reevaluation is not possible.";
 
-EvaluateIfChanged::usage = "EvaluateIfChanged[expr, trackedsymbols] evaluates expr only if there is a change in trackedsymbols."
+EvaluateIfChanged::usage = "EvaluateIfChanged[expr, trackedsymbols] evaluates expr only if there is a change in trackedsymbols.";
+
+LinkParallelEvaluate::usage = "LinkParallelEvaluate[expr, \"name\"] loads a WSTP-compatible external program in every subkernel to perform a parallel
+evaluation on expr. expr must be a parallel function like ParallelMap, ParallelTable, ParallelEvaluate, etc.";
+
+LinkEvaluate::usage "LinkEvaluate[expr, \"name\"] loads a WSTP-compatible external program in the master kernel to perform a
+evaluation on expr. This can be used with LinkParallelEvaluate to control the scoping of the link definitions.";
 
 
 (* ::Chapter:: *)
@@ -124,6 +130,10 @@ Begin["`Private`"]
 (*Clock*)
 
 
+(* ::Text:: *)
+(*Simple hh/mm/ss implementation of a clock.*)
+
+
 GetSeconds[time_] := IntegerString[Round[Mod[time, 60]], 10, 2];
 GetMinutes[time_]:= IntegerString[Mod[Floor[time/60], 60], 10, 2];
 GetHours[time_] := IntegerString[Floor[time/3600], 10, 2];
@@ -132,6 +142,10 @@ ClockFormat[time_] := StringJoin[GetHours[time], ":", GetMinutes[time], ":", Get
 
 (* ::Chapter:: *)
 (*Progress indicator*)
+
+
+(* ::Text:: *)
+(*Progress indicator to be used by ProgressMap and ProgressTable family of functions.*)
 
 
 DefaultIndicator[indexProgress_, totalSize_] := ProgressIndicator[indexProgress, {1, totalSize}];
@@ -166,6 +180,10 @@ Block[{progressString, remainingTime, remainingTimeString, indicator, ellapsedTi
 
 (* ::Chapter:: *)
 (*Conditional and special maps*)
+
+
+(* ::Text:: *)
+(*Special cases of regular Map functions.*)
 
 
 SetAttributes[MapIf, HoldAll];
@@ -299,8 +317,8 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 SetAttributes[ProgressMapThread,HoldFirst];
 ProgressMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->False,"Label"->"Evaluating..."}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
-	If[Length[expr]<1, Message[ProgressMapThread::exprlengtherr];Return[$Failed]];
-	If[Depth[expr]<3, Message[ProgressMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
+	If[Length[expr] < 1, Message[ProgressMapThread::exprlengtherr];Return[$Failed]];
+	If[Depth[expr] < 3, Message[ProgressMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
 
 	Monitor[
 		MapThread[
@@ -325,8 +343,8 @@ SetAttributes[ProgressParallelMapThread,HoldFirst];
 ProgressParallelMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->False,"Label"->"Evaluating..."}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
-	If[Length[expr]<1, Message[ProgressParallelMapThread::exprlengtherr];Return[$Failed]];
-	If[Depth[expr]<3, Message[ProgressParallelMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
+	If[Length[expr] < 1, Message[ProgressParallelMapThread::exprlengtherr];Return[$Failed]];
+	If[Depth[expr] < 3, Message[ProgressParallelMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
 
 	Monitor[
 		ParallelMapThread[
@@ -518,6 +536,10 @@ NestListIndexed[f_, expr_, n_?NonNegative, startIndex_:1] :=
 (*Special evaluation*)
 
 
+(* ::Text:: *)
+(*EvaluateOnce and EvaluateIfChanged work by creating a special secret symbol that is checked for changes every evaluation. LinkParallelEvaluate is useful to do parallel computations in a clean way when using Mathlink or WSTP (I only tested it with Mathlink). Since sometimes one needs to execute also a WSTP function in the master kernel, LinkEvaluate helps to keep the master kernel definition out of the subkernels way.*)
+
+
 SetAttributes[{EvaluateIfChanged, EvaluateOnce, SpecialSymbol}, {HoldAll, HoldAll, HoldAll}];
 
 SpecialSymbol[expr_] := SpecialSymbol[expr] = Module[{t, tempSymbol}, SpecialSymbol[expr, t := Unique[tempSymbol]] = t];
@@ -525,10 +547,27 @@ SpecialSymbol[expr_] := SpecialSymbol[expr] = Module[{t, tempSymbol}, SpecialSym
 EvaluateIfChanged[expr_, trackedSymbols_]:=
 If[UnsameQ[SpecialSymbol[expr], trackedSymbols],
 	SpecialSymbol[expr] = trackedSymbols;
-	ReleaseHold[expr];
+	Return[ReleaseHold[expr]];
 ];
 
 EvaluateOnce[expr_] := EvaluateIfChanged[expr, True];
+
+SetAttributes[LinkParallelEvaluate, HoldFirst];
+LinkParallelEvaluate[expr_ /; MemberQ[Names["*Parallel*"], ToString[Head[Unevaluated[expr]]]], name_String] := 
+Module[{link, output},
+	ParallelEvaluate[link = Install[name]];
+	output = Evaluate[expr];
+	ParallelEvaluate[Uninstall[link]];
+	Return[output];
+];
+
+SetAttributes[LinkEvaluate, HoldFirst];
+LinkEvaluate[expr_, name_String] := Module[{link, output},
+	link = Install[name];
+	output = Evaluate[expr];
+	Uninstall[link];
+	Return[output];
+];
 
 
 (* ::Chapter:: *)

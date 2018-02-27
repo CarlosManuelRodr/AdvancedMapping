@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     46766,       1324]
-NotebookOptionsPosition[     34428,       1023]
-NotebookOutlinePosition[     37358,       1095]
-CellTagsIndexPosition[     37228,       1089]
+NotebookDataLength[     48051,       1362]
+NotebookOptionsPosition[     35473,       1055]
+NotebookOutlinePosition[     38403,       1127]
+CellTagsIndexPosition[     38273,       1121]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -1016,13 +1016,45 @@ Cell[BoxData["\<\"Evaluation\"\>"], "Print",
  CellChangeTimes->{
   3.7276220535784407`*^9},ExpressionUUID->"42a8acdd-a3a3-438b-8ab5-\
 6aa2b76e0a49"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"linkPath", " ", "=", " ", 
+   RowBox[{"FileNameJoin", "[", 
+    RowBox[{"{", 
+     RowBox[{
+     "$InstallationDirectory", ",", "\"\<SystemFiles\>\"", ",", 
+      "\"\<Links\>\"", ",", "\"\<MathLink\>\"", ",", "\"\<DeveloperKit\>\"", 
+      ",", "$SystemID", ",", "\"\<PrebuiltExamples\>\"", ",", 
+      "\"\<addtwo\>\""}], "}"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"LinkParallelEvaluate", "[", 
+  RowBox[{
+   RowBox[{"ParallelMap", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"AddTwo", "[", 
+       RowBox[{"1", ",", "#"}], "]"}], "&"}], ",", 
+     RowBox[{"Range", "[", "10", "]"}]}], "]"}], ",", "linkPath"}], 
+  "]"}]}], "Input",ExpressionUUID->"38d8d998-e429-48f4-879d-9fdf7bee269f"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+  "2", ",", "3", ",", "4", ",", "5", ",", "6", ",", "7", ",", "8", ",", "9", 
+   ",", "10", ",", "11"}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.727897217508587*^9},ExpressionUUID->"8487b28e-a259-473a-94cb-\
+9c1f9fba22b8"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
 },
 WindowSize->{808, 740},
-WindowMargins->{{261, Automatic}, {Automatic, 107}},
+WindowMargins->{{261, Automatic}, {Automatic, 141}},
 FrontEndVersion->"11.1 for Linux x86 (64-bit) (April 18, 2017)",
 StyleDefinitions->"Default.nb"
 ]
@@ -1088,8 +1120,8 @@ CellTagsIndex->{
 *)
 (*CellTagsIndex
 CellTagsIndex->{
- {"Info73727600403-6572991", 34730, 1033},
- {"Info73727600404-6572991", 35476, 1049}
+ {"Info73727600403-6572991", 35775, 1065},
+ {"Info73727600404-6572991", 36521, 1081}
  }
 *)
 (*NotebookFileOutline
@@ -1322,6 +1354,12 @@ Cell[33954, 1005, 271, 7, 35, "Input", "ExpressionUUID" -> \
 "605391f5-f5c4-481b-a7eb-5aaa565c239c"],
 Cell[34228, 1014, 148, 3, 25, "Print", "ExpressionUUID" -> \
 "42a8acdd-a3a3-438b-8ab5-6aa2b76e0a49"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[34413, 1022, 741, 18, 106, "Input", "ExpressionUUID" -> \
+"38d8d998-e429-48f4-879d-9fdf7bee269f"],
+Cell[35157, 1042, 264, 7, 35, "Output", "ExpressionUUID" -> \
+"8487b28e-a259-473a-94cb-9c1f9fba22b8"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
