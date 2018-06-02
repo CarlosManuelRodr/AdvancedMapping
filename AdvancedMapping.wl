@@ -263,7 +263,7 @@ Module[{result, tag},
 
 
 SetAttributes[ProgressParallelMap, HoldFirst];
-ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating...", Parallelize}]] :=
+ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->True, "Label"->"Evaluating...", Parallelize}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
 	If[Length[expr]<1, Message[ProgressParallelMap::exprlengtherr];Return[$Failed]];
@@ -288,7 +288,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 ]; 
 
 SetAttributes[ProgressMap, HoldFirst];
-ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->False, "Label"->"Evaluating..."}]] :=
+ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->True, "Label"->"Evaluating..."}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	Monitor[
 		If[Length[expr]<1, Message[ProgressMap::exprlengtherr];Return[$Failed]];
@@ -315,7 +315,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 
 
 SetAttributes[ProgressMapThread,HoldFirst];
-ProgressMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->False,"Label"->"Evaluating..."}]] :=
+ProgressMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->True,"Label"->"Evaluating..."}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	If[Length[expr] < 1, Message[ProgressMapThread::exprlengtherr];Return[$Failed]];
 	If[Depth[expr] < 3, Message[ProgressMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
@@ -340,7 +340,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 ]; 
 
 SetAttributes[ProgressParallelMapThread,HoldFirst];
-ProgressParallelMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->False,"Label"->"Evaluating..."}]] :=
+ProgressParallelMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->True,"Label"->"Evaluating..."}]] :=
 Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
 	If[Length[expr] < 1, Message[ProgressParallelMapThread::exprlengtherr];Return[$Failed]];
@@ -371,20 +371,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 
 
 SetAttributes[ProgressTable, HoldFirst];
-
-Options[ProgressTable] = {"ShowInfo"->False, "Label"->"Evaluating..."};
-ProgressTable[expr_, {i_, iterators_}, opts:OptionsPattern[]] :=
-Block[{tableIndex = 0,startTime = AbsoluteTime[]},
-	Monitor[
-		Table[tableIndex++;expr, {i, iterators}]
-		,
-		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
-			DetailedIndicator[tableIndex, Length[iterators], startTime, OptionValue[ProgressTable, {opts}, "Label"]]
-			,
-			DefaultIndicator[tableIndex, Length[iterators]]
-		]
-	]
-];
+Options[ProgressTable] = {"ShowInfo"->True, "Label"->"Evaluating..."};
 
 ProgressTable[expr_, n_Integer, opts: OptionsPattern[]] :=
 Block[{tableIndex = 0, startTime = AbsoluteTime[]},
@@ -422,21 +409,7 @@ Block[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
 
 SetAttributes[ProgressParallelTable,HoldFirst];
 
-Options[ProgressTable]={"ShowInfo"->False, "Label"->"Evaluating...", ParallelTable};
-ProgressParallelTable[expr_, {i_, iterators_}, opts:OptionsPattern[]]:=
-Block[{tableIndex = 0, startTime = AbsoluteTime[]},
-	SetSharedVariable[tableIndex];
-
-	Monitor[
-		ParallelTable[tableIndex++;expr, {i, iterators}, Evaluate[FilterRules[{opts}, Options[ParallelTable]]]]
-		,
-		If[OptionValue[ProgressTable, {opts}, "ShowInfo"],
-			DetailedIndicator[tableIndex, Length[iterators], startTime, OptionValue[ProgressTable, {opts}, "Label"]]
-			,
-			DefaultIndicator[tableIndex, Length[iterators]]
-		]
-	]
-];
+Options[ProgressTable]={"ShowInfo"->True, "Label"->"Evaluating...", ParallelTable};
 
 ProgressParallelTable[expr_, n_Integer, opts:OptionsPattern[]]:=
 Block[{tableIndex = 0,startTime = AbsoluteTime[]},
