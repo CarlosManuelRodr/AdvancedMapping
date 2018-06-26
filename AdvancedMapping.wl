@@ -264,7 +264,7 @@ Module[{result, tag},
 
 SetAttributes[ProgressParallelMap, HoldFirst];
 ProgressParallelMap[f_, expr_, opts: OptionsPattern[{"ShowInfo"->True, "Label"->"Evaluating...", Parallelize}]] :=
-Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
+Module[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
 	If[Length[expr]<1, Message[ProgressParallelMap::exprlengtherr];Return[$Failed]];
 
@@ -289,7 +289,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 
 SetAttributes[ProgressMap, HoldFirst];
 ProgressMap[f_, expr_, OptionsPattern[{"ShowInfo"->True, "Label"->"Evaluating..."}]] :=
-Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
+Module[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	Monitor[
 		If[Length[expr]<1, Message[ProgressMap::exprlengtherr];Return[$Failed]];
 		Map[
@@ -316,7 +316,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 
 SetAttributes[ProgressMapThread,HoldFirst];
 ProgressMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->True,"Label"->"Evaluating..."}]] :=
-Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
+Module[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	If[Length[expr] < 1, Message[ProgressMapThread::exprlengtherr];Return[$Failed]];
 	If[Depth[expr] < 3, Message[ProgressMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
 
@@ -341,7 +341,7 @@ Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
 
 SetAttributes[ProgressParallelMapThread,HoldFirst];
 ProgressParallelMapThread[f_, expr_, OptionsPattern[{"ShowInfo"->True,"Label"->"Evaluating..."}]] :=
-Block[{startTime = AbsoluteTime[], indexProgress = 0, output},
+Module[{startTime = AbsoluteTime[], indexProgress = 0, output},
 	SetSharedVariable[indexProgress];
 	If[Length[expr] < 1, Message[ProgressParallelMapThread::exprlengtherr];Return[$Failed]];
 	If[Depth[expr] < 3, Message[ProgressParallelMapThread::exprdeptherr, Depth[expr]];Return[$Failed]];
@@ -374,7 +374,7 @@ SetAttributes[ProgressTable, HoldFirst];
 Options[ProgressTable] = {"ShowInfo"->True, "Label"->"Evaluating..."};
 
 ProgressTable[expr_, n_Integer, opts: OptionsPattern[]] :=
-Block[{tableIndex = 0, startTime = AbsoluteTime[]},
+Module[{tableIndex = 0, startTime = AbsoluteTime[]},
 	Monitor[
 		Table[tableIndex++;expr, n]
 		,
@@ -387,7 +387,7 @@ Block[{tableIndex = 0, startTime = AbsoluteTime[]},
 ];
 
 ProgressTable[expr_, iterators__, opts:OptionsPattern[]]:= 
-Block[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
+Module[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
 	(* This is beautiful. Author: Giovanni F. From: https://mathematica.stackexchange.com/a/86059 *)
 	tuplesLength = Length[Tuples[Map[Range[Rest[#] /. List->Sequence]&, {iterators}]]];
 
@@ -412,7 +412,7 @@ SetAttributes[ProgressParallelTable,HoldFirst];
 Options[ProgressTable]={"ShowInfo"->True, "Label"->"Evaluating...", ParallelTable};
 
 ProgressParallelTable[expr_, n_Integer, opts:OptionsPattern[]]:=
-Block[{tableIndex = 0,startTime = AbsoluteTime[]},
+Module[{tableIndex = 0,startTime = AbsoluteTime[]},
 	SetSharedVariable[tableIndex];
 
 	Monitor[
@@ -427,7 +427,7 @@ Block[{tableIndex = 0,startTime = AbsoluteTime[]},
 ];
 
 ProgressParallelTable[expr_, iterators__, opts:OptionsPattern[]]:= 
-Block[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
+Module[{tuplesLength, tableIndex = 0, startTime = AbsoluteTime[]},
 	SetSharedVariable[tableIndex];
 	tuplesLength = Length[Tuples[Map[Range[Rest[#] /. List->Sequence]&, {iterators}]]];
 
